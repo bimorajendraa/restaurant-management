@@ -110,7 +110,7 @@ const request = async <Response>(
   //_____________interceptor_______________//
   // nếu có lỗi trong quá trình request
   if (!res.ok) {
-    if (res.status === ENTITY_ERROR_STATUS) {
+    if (res.status === ENTITY_ERROR_STATUS) { //422
       throw new EntityError(
         data as {
           status: 422
@@ -118,7 +118,7 @@ const request = async <Response>(
         },
       )
       //handle 401 token is expired
-    } else if (res.status === AUTHENTICATION_ERROR_STATUS) {
+    } else if (res.status === AUTHENTICATION_ERROR_STATUS) { //401
       if (isClient) {
         if (!clientLogoutRequest) {
           clientLogoutRequest = fetch('/api/auth/logout', {
