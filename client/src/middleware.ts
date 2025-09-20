@@ -1,8 +1,12 @@
+import { Role } from '@/constants/type'
+import { decodeToken } from '@/lib/utils'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-const privatePaths = ['/manage']
+const managePaths = ['/manage']
+const guestPaths = ['/guest']
 
+const privatePaths = [...managePaths, ...guestPaths]
 const unAuthPaths = ['/login']
 
 // This function can be marked `async` if using `await` inside
@@ -12,22 +16,41 @@ export function middleware(request: NextRequest) {
   const accessToken = request.cookies.get('accessToken')?.value
   const refreshToken = request.cookies.get('refreshToken')?.value
 
+  // Case 1: Chưa đăng nhập mà truy cập vào trang private path
   if (!refreshToken && privatePaths.some((path) => pathname.startsWith(path))) {
     const url = new URL('/login', request.url)
     url.searchParams.set('clearTokens', 'true')
     return NextResponse.redirect(url)
   }
 
-  if (refreshToken && unAuthPaths.some((path) => pathname.startsWith(path))) {
-    return NextResponse.redirect(new URL('/', request.url))
-  }
+  // Case 2: Đã đăng nhập
+  if (refreshToken) {
+    // Case 2.1: Đã đăng nhập mà truy cập vào trang login sẽ redirect về trang chủ
+    if (unAuthPaths.some((path) => pathname.startsWith(path))) {
+      return NextResponse.redirect(new URL('/', request.url))
+    }
 
-  // accessToken hết hạn nên phải refresh token để lấy accessToken và refreshToken mới
-  if (!accessToken && refreshToken && privatePaths.some((path) => pathname.startsWith(path))) {
-    const url = new URL('/refresh-token', request.url)
-    url.searchParams.set('refreshToken', refreshToken as string)
-    url.searchParams.set('redirect', pathname)
-    return NextResponse.redirect(url)
+    // Case 2.2: Access token hết hạn, refresh token còn hạn
+    if (!accessToken && privatePaths.some((path) => pathname.startsWith(path))) {
+      const url = new URL('/refresh-token', request.url)
+      url.searchParams.set('refreshToken', refreshToken as string)
+      url.searchParams.set('redirect', pathname)
+      return NextResponse.redirect(url)
+    }
+
+    // Case 2.3: Truy cập không đúng role sẽ bị redirect về trang chủ
+    // - required accessToken
+    if (accessToken) {
+      const role = decodeToken(accessToken).role
+      console.log(role)
+
+      const isGuestToManagePath = role === Role.Guest && managePaths.some((path) => pathname.startsWith(path))
+      const isNotGuestGoToGuestPath = role !== Role.Guest && guestPaths.some((path) => pathname.startsWith(path))
+
+      if (isGuestToManagePath || isNotGuestGoToGuestPath) {
+        return NextResponse.redirect(new URL('/', request.url))
+      }
+    }
   }
 
   return NextResponse.next()
@@ -35,5 +58,5 @@ export function middleware(request: NextRequest) {
 
 // See "Matching Paths" below to learn more
 export const config = {
-  matcher: ['/login', '/manage/:path*'],
+  matcher: ['/login', '/manage/:path*', '/guest/:path*'],
 }

@@ -5,9 +5,10 @@ import { EntityError } from './http'
 import { toast } from '@/components/ui/use-toast'
 import authApi from '@/apiRequests/auth'
 import jwt from 'jsonwebtoken'
-import { DishStatus, OrderStatus, TableStatus } from '@/constants/type'
+import { DishStatus, OrderStatus, Role, TableStatus } from '@/constants/type'
 import envConfig from '@/config'
 import { TokenPayload } from '@/types/jwt.types'
+import guestApi from '@/apiRequests/guest'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -100,7 +101,8 @@ export const checkAndRefreshToken = async ({
   if (decodeAccessToken.exp - currentTime < (decodeAccessToken.exp - decodeAccessToken.iat) / 3) {
     try {
       console.log('access token sắp hết hạn')
-      const res = await authApi.refreshToken()
+      const role = decodeAccessToken.role
+      const res = role === Role.Guest ? await guestApi.refreshToken() : await authApi.refreshToken()
       setAccessTokenToLocalStorage(res.payload.data.accessToken)
       setRefreshTokenToLocalStorage(res.payload.data.refreshToken)
       onSuccess && onSuccess()
