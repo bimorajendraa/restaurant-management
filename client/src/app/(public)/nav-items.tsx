@@ -1,44 +1,82 @@
 'use client'
 
 import { useAppContext } from '@/components/app-provider'
+import { toast } from '@/components/ui/use-toast'
+import { Role } from '@/constants/type'
+import { cn, handleErrorApi } from '@/lib/utils'
+import { useLogoutMutation } from '@/queries/useAuth'
+import { RoleType } from '@/types/jwt.types'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 
-const menuItems = [
+interface menuType {
+  title: string
+  href: string
+  role?: RoleType[]
+  hideWhenLogin?: boolean
+}
+
+const menuItems: menuType[] = [
   {
-    title: 'Món ăn',
-    href: '/menu',
+    title: 'Trang chủ',
+    href: '/',
   },
   {
-    title: 'Đơn hàng',
-    href: '/orders',
-    authRequired: true,
+    title: 'Menu',
+    href: '/guest/menu',
+    role: [Role.Guest],
   },
   {
     title: 'Đăng nhập',
     href: '/login',
-    authRequired: false,
+    hideWhenLogin: true,
   },
   {
     title: 'Quản lý',
     href: '/manage/dashboard',
-    authRequired: true,
+    role: [Role.Owner, Role.Employee],
   },
 ]
 
-// Server: Món ăn, Đăng nhập. Do server không biết trạng thái đăng nhập của user
-// Client: Đầu tiên client hiển thị là món ăn, đăng nhập.. nhưng ngay sau đó thì client render ra Món ăn, Đơn hàng, Quản lý (nếu đã đăng nhập)
-// --> dẫn đến hiện tượng nhấp nháy giao diện (layout shift)
-
 export default function NavItems({ className }: { className?: string }) {
-  const { isAuth } = useAppContext()
+  const { role, setRole } = useAppContext()
+  const logoutMutation = useLogoutMutation()
+  const router = useRouter()
 
-  return menuItems.map((item) => {
-    if ((item.authRequired === false && isAuth) || (item.authRequired === true && !isAuth)) return null
+  const logout = async () => {
+    if (logoutMutation.isPending) return
+    try {
+      await logoutMutation.mutateAsync()
+      setRole()
+      router.push('/')
+    } catch (error: any) {
+      handleErrorApi({
+        error,
+      })
+    }
+  }
 
-    return (
-      <Link href={item.href} key={item.href} className={className}>
-        {item.title}
-      </Link>
-    )
-  })
+  return (
+    <>
+      {menuItems.map((item) => {
+        const isAuth = item.role && role && item.role.includes(role)
+
+        const canShow = (!item.hideWhenLogin && !item.role) || (item.hideWhenLogin && !role)
+
+        if (isAuth || canShow) {
+          return (
+            <Link href={item.href} key={item.href} className={className}>
+              {item.title}
+            </Link>
+          )
+        }
+        return null
+      })}
+      {role && (
+        <div className={cn(className, 'cursor-pointer')} onClick={logout}>
+          Đăng xuất
+        </div>
+      )}
+    </>
+  )
 }
