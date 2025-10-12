@@ -30,7 +30,7 @@ import { Button } from '@/components/ui/button'
 import { Command, CommandGroup, CommandItem, CommandList } from '@/components/ui/command'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { endOfDay, format, startOfDay } from 'date-fns'
-import { useGetOrderListQuery } from '@/queries/useOrder'
+import { useGetOrderListQuery, useUpdateOrderMutation } from '@/queries/useOrder'
 import { useGetListTable } from '@/queries/useTable'
 import TableSkeleton from '@/app/manage/orders/table-skeleton'
 import socket from '@/lib/socket'
@@ -93,12 +93,22 @@ export default function OrderTable() {
 
   const { statics, orderObjectByGuestId, servingGuestByTableNumber } = useOrderService(orderList)
 
-  const changeStatus = async (body: {
+  const updateOrderMutation = useUpdateOrderMutation()
+
+  const changeStatus = async (body: { // change order status
     orderId: number
     dishId: number
     status: (typeof OrderStatusValues)[number]
     quantity: number
-  }) => {}
+  }) => {
+    try {
+      await updateOrderMutation.mutateAsync(body)
+    } catch (error) {
+      handleErrorApi({
+        error,
+      })
+    }
+  }
 
   const table = useReactTable({
     data: orderList,
