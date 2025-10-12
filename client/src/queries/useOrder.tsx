@@ -29,3 +29,9 @@ export const usePayGuestOrdersMutation = () => {
     mutationFn: (body: PayGuestOrdersBodyType) => orderApi.pay(body),
   })
 }
+
+export const useCreateOrderMutation = () => {
+  return useMutation({
+    mutationFn: orderApi.createOrder,
+  })
+}

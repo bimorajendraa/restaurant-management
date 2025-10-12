@@ -4,9 +4,14 @@ import {
   AccountResType,
   ChangePasswordBodyType,
   CreateEmployeeAccountBodyType,
+  CreateGuestBodyType,
+  CreateGuestResType,
+  GetGuestListQueryParamsType,
+  GetListGuestsResType,
   UpdateEmployeeAccountBodyType,
   UpdateMeBodyType,
 } from '@/schemas/account.schema'
+import queryString from 'query-string'
 
 const PREFIX_ACCOUNT = '/accounts'
 
@@ -33,6 +38,25 @@ const accountApi = {
   getEmployeeDetail: (id: number) => http.get<AccountResType>(`${PREFIX_ACCOUNT}/detail/${id}`),
 
   deleteEmployee: (id: number) => http.delete<AccountResType>(`${PREFIX_ACCOUNT}/detail/${id}`),
+
+  guestList: (queryParams: GetGuestListQueryParamsType) =>
+    http.get<GetListGuestsResType>(
+      `${PREFIX_ACCOUNT}/guests?${new URLSearchParams({
+        fromDate: queryParams.fromDate ? queryParams.fromDate.toISOString() : '',
+        toDate: queryParams.toDate ? queryParams.toDate.toISOString() : '',
+      })}`,
+    ),
+
+  // guestList1: (queryParams: GetGuestListQueryParamsType) =>
+  //   http.get<AccountListResType>(
+  //     `${PREFIX_ACCOUNT}/guests?` +
+  //       queryString.stringify({
+  //         fromDate: queryParams.fromDate?.toISOString(),
+  //         toDate: queryParams.toDate?.toISOString(),
+  //       }),
+  //   ),
+
+  createGuest: (body: CreateGuestBodyType) => http.post<CreateGuestResType>(`${PREFIX_ACCOUNT}/guests`, body),
 }
 
 export default accountApi

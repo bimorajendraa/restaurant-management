@@ -1,5 +1,7 @@
 import http from '@/lib/http'
 import {
+  CreateOrdersBodyType,
+  CreateOrdersResType,
   GetOrderDetailResType,
   GetOrdersQueryParamsType,
   GetOrdersResType,
@@ -11,6 +13,8 @@ import {
 import querystring from 'query-string'
 
 const orderApi = {
+  createOrder: (body: CreateOrdersBodyType) => http.post<CreateOrdersResType>(`/orders`, body),
+
   getOrderList: (queryParams: GetOrdersQueryParamsType) =>
     http.get<GetOrdersResType>(
       `/orders?${querystring.stringify({

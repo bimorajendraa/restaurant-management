@@ -74,4 +74,23 @@ const setIsAuth = useCallback((isAuth: boolean) => {
 - Đóng dialog (X), click ra ngoài dialog → giữ nguyên dữ liệu đã nhập (cache đến khi F5).
 - Submit thành công → reset form values.
 
-- Khi create hoặc delete(account, dish, table) thì chỉ cần refetch lại list chứ không refectch tất cả detail của từng id -> tránh tiêu tốn tài nguyên dư thừa 
+- Khi create hoặc delete(account, dish, table) thì chỉ cần refetch lại list chứ không refectch tất cả detail của từng id -> tránh tiêu tốn tài nguyên dư thừa
+
+### Cập nhật một số thay đổi về logic Server
+
+Hướng dẫn:
+
+- Table:
+  Khi thay đổi token của table thì server sẽ xóa các refresh token của guest liên quan đến table đó. Điều này sẽ làm cho Guest đó phải đăng nhập lại khi access token kết thúc.
+  Mục đích: ngăn chặn việc guest đặt đơn hàng phá quán.
+
+- Status table là Hidden, Reversed thì guest sẽ không thể login và gọi món từ bàn đó.
+
+Status table là Hidden thì Admin/employee cũng không thể tạo order từ bàn đó.
+Chỉ còn trạng thái Reversed thì admin/employee có thể tạo đơn hàng từ bàn đó.
+
+- Guest:
+  Thêm API tạo guest, get danh sách guests
+
+- Order:
+  Thêm API tạo order cho admin/employee
