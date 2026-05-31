@@ -88,7 +88,9 @@ const request = async <Response>(
   // xử lí URL
   const baseUrl =
     options?.baseUrl === undefined
-      ? envConfig.DOCKER_PUBLIC_API_ENDPOINT || envConfig.NEXT_PUBLIC_API_ENDPOINT
+      ? isClient
+        ? envConfig.NEXT_PUBLIC_API_ENDPOINT
+        : envConfig.DOCKER_PUBLIC_API_ENDPOINT || envConfig.NEXT_PUBLIC_API_ENDPOINT
       : options.baseUrl
   const fullUrl = `${baseUrl}/${normalizePath(url)}`
   // console.log('fullUrl:', fullUrl)
